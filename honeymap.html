@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honey Production Map</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/6.7.0/d3.min.js"></script>
+</head>
+<body>
+    <div id="test"></div>
+    <script>
+        d3.csv("https://raw.githubusercontent.com/koniro-kishi/gkv-project1-p2k2/refs/heads/main/merged_dataset.csv").then(function(rows) {
+            console.log("Loaded data:", rows);
+
+            function unpack(rows, key) {
+                return rows.map(function(row) { return row[key]; });
+            }
+
+            var yearsee = 2021;
+
+            // Filter rows for the year inputted
+            var filteredRows = rows.filter(function(row) {
+                return +row.year === yearsee; // Ensure the year matches the dataset
+            });
+
+            if (filteredRows.length === 0) {
+                console.error("No data found for the year 1999.");
+                return;
+            }
+
+            console.log("Filtered data:", filteredRows);
+
+            var stateName = unpack(filteredRows, 'state'),
+                stateTotalProd = unpack(filteredRows, 'totalprod').map(Number),
+                statePricePerLb = unpack(filteredRows, 'priceperlb').map(Number),
+                stateLat = unpack(filteredRows, 'latitude').map(Number),
+                stateLon = unpack(filteredRows, 'longitude').map(Number),
+                stateSize = [],
+                hoverText = [],
+                colorScale = d3.scaleLinear()
+                               .domain([Math.min(...statePricePerLb), Math.max(...statePricePerLb)])
+                               .range(["green", "red"]); // Cheaper = greener, expensive = red
+
+            for (var i = 0; i < stateTotalProd.length; i++) {
+                var currentSize = stateTotalProd[i] / 250000; // Scale bubble size
+                var currentColor = colorScale(statePricePerLb[i]); // Map priceperlb to color
+                var currentText = `${stateName[i]}<br>Total Production: ${stateTotalProd[i]}<br>Price per lb: $${statePricePerLb[i]}`;
+                stateSize.push(currentSize);
+                hoverText.push(currentText);
+            }
+
+            var data = [{
+                type: 'scattergeo',
+                locationmode: 'USA-states',
+                lat: stateLat,
+                lon: stateLon,
+                hoverinfo: 'text',
+                text: hoverText,
+                marker: {
+                    size: stateSize,
+                    color: statePricePerLb.map(colorScale), // Apply color scale
+                    line: {
+                        color: 'black',
+                        width: 1
+                    },
+                }
+            }];
+
+            var layout = {
+                title: { text: yearsee + ' US Honey Production' },
+                showlegend: false,
+                geo: {
+                    scope: 'usa',
+                    projection: {
+                        type: 'albers usa'
+                    },
+                    showland: true,
+                    landcolor: 'rgb(217, 217, 217)',
+                    subunitwidth: 1,
+                    countrywidth: 1,
+                    subunitcolor: 'rgb(255,255,255)',
+                    countrycolor: 'rgb(255,255,255)'
+                },
+            };
+
+            Plotly.newPlot("test", data, layout, { showLink: false });
+        });
+    </script>
+</body>
+</html>
