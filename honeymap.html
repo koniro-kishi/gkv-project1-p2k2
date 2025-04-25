@@ -11,6 +11,8 @@
 <body>
     <div id="map"></div>
     <div id="line"></div>
+    <div id="multiLine"></div>
+    <div id="horiBar"></div>
     <script>
         d3.csv("https://raw.githubusercontent.com/koniro-kishi/gkv-project1-p2k2/refs/heads/main/merged_dataset.csv").then(function(rows) {
 
@@ -18,7 +20,7 @@
                 return rows.map(function(row) { return row[key]; });
             }
 
-            var yearsee = 2021;
+            var yearsee = 2014;
 
             // Filter rows for the year inputted
             var filteredRows = rows.filter(function(row) {
@@ -85,12 +87,38 @@
 
 
             var year = [1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021];
-            var sumTotalProd = new Array(2021-1998+1).fill(0); // Initialize array to hold sums for each year
+            var sumTotalProd = new Array(2021-1998+1).fill(0); 
+            var totalProd_Montana = new Array(2021-1998+1).fill(0);
+            var totalProd_California = new Array(2021-1998+1).fill(0); 
+            var totalProd_Florida = new Array(2021-1998+1).fill(0); 
+            var totalProd_SouthDakota = new Array(2021-1998+1).fill(0); 
+            var totalProd_NorthDakota = new Array(2021-1998+1).fill(0); 
+            var sumTotalProd_NorthDakota = 0;
+            var sumTotalProd_SouthDakota = 0;
+            var sumTotalProd_Florida = 0;
+            var sumTotalProd_California = 0;
+            var sumTotalProd_Montana = 0;
 
             for (let i = 0; i < rows.length; i++) {
                 let instYear = +rows[i].year;
                 let instTotalProd = +rows[i].totalprod;
                 sumTotalProd[instYear-1998] += instTotalProd;
+                if (rows[i].state === "North Dakota") {
+                    totalProd_NorthDakota[instYear-1998] = instTotalProd;
+                    sumTotalProd_NorthDakota += instTotalProd;
+                } else if (rows[i].state === "South Dakota") {
+                    totalProd_SouthDakota[instYear-1998] = instTotalProd;
+                    sumTotalProd_SouthDakota += instTotalProd;
+                } else if (rows[i].state === "Florida") {
+                    totalProd_Florida[instYear-1998] = instTotalProd;
+                    sumTotalProd_Florida += instTotalProd;  
+                } else if (rows[i].state === "California") {
+                    totalProd_California[instYear-1998] = instTotalProd;
+                    sumTotalProd_California += instTotalProd;   
+                } else if (rows[i].state === "Montana") {
+                    totalProd_Montana[instYear-1998] += instTotalProd;
+                    sumTotalProd_Montana += instTotalProd; 
+                }
             }
 
             var dataLine = [
@@ -121,6 +149,97 @@
                 };            
 
             Plotly.newPlot("line", dataLine, layoutLine, { showLink: false });
+
+
+            var trace_Montana = {
+                name: 'Montana',
+                x: year,
+                y: totalProd_Montana,
+                type: 'scatter'
+            };
+
+            var trace_California = {
+                name: 'California',
+                x: year,
+                y: totalProd_California,
+                type: 'scatter'
+            };
+
+            var trace_Florida = {
+                name: 'Florida',
+                x: year,
+                y: totalProd_Florida,
+                type: 'scatter'
+            };  
+
+            var trace_SouthDakota = {
+                name: 'South Dakota',
+                x: year,
+                y: totalProd_SouthDakota,
+                type: 'scatter'
+            };
+
+            var trace_NorthDakota = {
+                name: 'North Dakota',
+                x: year,
+                y: totalProd_NorthDakota,
+                type: 'scatter'
+            }; 
+
+            var dataMultiLine = [trace_California, trace_Florida, trace_Montana, trace_NorthDakota, trace_SouthDakota];
+
+            var layoutMultiLine = {
+                title: {
+                    text: 'Top 5 Produksi Madu Teratas di AS',
+                },
+                xaxis: {
+                    title: {
+                    text: 'Tahun'
+                    }
+                },
+                yaxis: {
+                    title: {
+                    text: 'Total produksi madu (lb)'
+                    }
+                }
+            }
+
+            Plotly.newPlot("multiLine", dataMultiLine, layoutMultiLine, { showLink: false });
+
+
+
+            var avgTotalProd = [
+                sumTotalProd_Montana / (2021-1998+1),
+                sumTotalProd_Florida / (2021-1998+1),
+                sumTotalProd_SouthDakota / (2021-1998+1),
+                sumTotalProd_California / (2021-1998+1),
+                sumTotalProd_NorthDakota / (2021-1998+1)
+            ];
+
+            var dataBar = [{
+                type: 'bar',
+                x: avgTotalProd,
+                y: ['Montana', 'Florida', 'South Dakota', 'California', 'North Dakota'],
+                orientation: 'h'
+            }];
+
+            var layoutBar = {
+                title: {
+                    text: 'Top 5 Produksi Madu Teratas di AS',
+                },
+                xaxis: {
+                    title: {
+                    text: 'Rata-rata total produksi madu (lb)'
+                    }
+                },
+                yaxis: {
+                    title: {
+                    text: 'Negara Bagian'
+                    }
+                }
+            }
+
+            Plotly.newPlot('horiBar', dataBar, layoutBar, { showLink: false });
         });
     </script>
 </body>
