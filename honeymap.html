@@ -9,10 +9,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/6.7.0/d3.min.js"></script>
 </head>
 <body>
-    <div id="test"></div>
+    <div id="map"></div>
+    <div id="line"></div>
     <script>
         d3.csv("https://raw.githubusercontent.com/koniro-kishi/gkv-project1-p2k2/refs/heads/main/merged_dataset.csv").then(function(rows) {
-            console.log("Loaded data:", rows);
 
             function unpack(rows, key) {
                 return rows.map(function(row) { return row[key]; });
@@ -25,11 +25,6 @@
                 return +row.year === yearsee; // Ensure the year matches the dataset
             });
 
-            if (filteredRows.length === 0) {
-                console.error("No data found for the year 1999.");
-                return;
-            }
-
             console.log("Filtered data:", filteredRows);
 
             var stateName = unpack(filteredRows, 'state'),
@@ -41,17 +36,17 @@
                 hoverText = [],
                 colorScale = d3.scaleLinear()
                                .domain([Math.min(...statePricePerLb), Math.max(...statePricePerLb)])
-                               .range(["green", "red"]); // Cheaper = greener, expensive = red
+                               .range(["green", "red"]);
 
             for (var i = 0; i < stateTotalProd.length; i++) {
-                var currentSize = stateTotalProd[i] / 250000; // Scale bubble size
-                var currentColor = colorScale(statePricePerLb[i]); // Map priceperlb to color
+                var currentSize = stateTotalProd[i] / 250000; 
+                var currentColor = colorScale(statePricePerLb[i]); 
                 var currentText = `${stateName[i]}<br>Total Production: ${stateTotalProd[i]}<br>Price per lb: $${statePricePerLb[i]}`;
                 stateSize.push(currentSize);
                 hoverText.push(currentText);
             }
 
-            var data = [{
+            var dataMap = [{
                 type: 'scattergeo',
                 locationmode: 'USA-states',
                 lat: stateLat,
@@ -60,7 +55,7 @@
                 text: hoverText,
                 marker: {
                     size: stateSize,
-                    color: statePricePerLb.map(colorScale), // Apply color scale
+                    color: statePricePerLb.map(colorScale), 
                     line: {
                         color: 'black',
                         width: 1
@@ -68,7 +63,7 @@
                 }
             }];
 
-            var layout = {
+            var layoutMap = {
                 title: { text: yearsee + ' US Honey Production' },
                 showlegend: false,
                 geo: {
@@ -85,7 +80,47 @@
                 },
             };
 
-            Plotly.newPlot("test", data, layout, { showLink: false });
+            Plotly.newPlot("map", dataMap, layoutMap, { showLink: false });
+
+
+
+            var year = [1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021];
+            var sumTotalProd = new Array(2021-1998+1).fill(0); // Initialize array to hold sums for each year
+
+            for (let i = 0; i < rows.length; i++) {
+                let instYear = +rows[i].year;
+                let instTotalProd = +rows[i].totalprod;
+                sumTotalProd[instYear-1998] += instTotalProd;
+            }
+
+            var dataLine = [
+            {
+                x: year,
+                y: sumTotalProd,
+                type: 'scatter'
+            }
+            ];
+
+            var layoutLine = {
+                title: {
+                    text: 'Jumlah Produksi Madu di AS per Tahun',
+                },
+                xaxis: {
+                    title: {
+                    text: 'Tahun'
+                    },
+                    showgrid: false,
+                    zeroline: false
+                },
+                yaxis: {
+                    title: {
+                    text: 'Jumlah Produksi Madu (lb)'
+                    },
+                    showline: false
+                }
+                };            
+
+            Plotly.newPlot("line", dataLine, layoutLine, { showLink: false });
         });
     </script>
 </body>
