@@ -9,7 +9,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/6.7.0/d3.min.js"></script>
 </head>
 <body>
-    <div id="map"></div>
+    <div id="map1998"></div>
+    <div id="map2021"></div>
     <div id="line"></div>
     <div id="multiLine"></div>
     <div id="horiBar"></div>
@@ -20,14 +21,11 @@
                 return rows.map(function(row) { return row[key]; });
             }
 
-            var yearsee = 2014;
-
-            // Filter rows for the year inputted
+            var yearView = 1998;
+            
             var filteredRows = rows.filter(function(row) {
-                return +row.year === yearsee; // Ensure the year matches the dataset
+                return +row.year === yearView; 
             });
-
-            console.log("Filtered data:", filteredRows);
 
             var stateName = unpack(filteredRows, 'state'),
                 stateTotalProd = unpack(filteredRows, 'totalprod').map(Number),
@@ -66,7 +64,7 @@
             }];
 
             var layoutMap = {
-                title: { text: yearsee + ' US Honey Production' },
+                title: { text: 'Produksi Madu Amerika Serikat pada Tahun '+ yearView },
                 showlegend: false,
                 geo: {
                     scope: 'usa',
@@ -82,7 +80,70 @@
                 },
             };
 
-            Plotly.newPlot("map", dataMap, layoutMap, { showLink: false });
+            Plotly.newPlot("map1998", dataMap, layoutMap, { showLink: false });
+
+
+
+            yearView = 2021;
+            
+            filteredRows = rows.filter(function(row) {
+                return +row.year === yearView; 
+            });
+
+            stateName = unpack(filteredRows, 'state');
+            stateTotalProd = unpack(filteredRows, 'totalprod').map(Number);
+            statePricePerLb = unpack(filteredRows, 'priceperlb').map(Number);
+            stateLat = unpack(filteredRows, 'latitude').map(Number);
+            stateLon = unpack(filteredRows, 'longitude').map(Number);
+            stateSize = [];
+            hoverText = [];
+            colorScale = d3.scaleLinear()
+                            .domain([Math.min(...statePricePerLb), Math.max(...statePricePerLb)])
+                            .range(["green", "red"]);
+
+            for (var i = 0; i < stateTotalProd.length; i++) {
+                var currentSize = stateTotalProd[i] / 250000; 
+                var currentColor = colorScale(statePricePerLb[i]); 
+                var currentText = `${stateName[i]}<br>Total Production: ${stateTotalProd[i]}<br>Price per lb: $${statePricePerLb[i]}`;
+                stateSize.push(currentSize);
+                hoverText.push(currentText);
+            }
+
+            dataMap = [{
+                type: 'scattergeo',
+                locationmode: 'USA-states',
+                lat: stateLat,
+                lon: stateLon,
+                hoverinfo: 'text',
+                text: hoverText,
+                marker: {
+                    size: stateSize,
+                    color: statePricePerLb.map(colorScale), 
+                    line: {
+                        color: 'black',
+                        width: 1
+                    },
+                }
+            }];
+
+            layoutMap = {
+                title: { text: 'Produksi Madu Amerika Serikat pada Tahun '+ yearView },
+                showlegend: false,
+                geo: {
+                    scope: 'usa',
+                    projection: {
+                        type: 'albers usa'
+                    },
+                    showland: true,
+                    landcolor: 'rgb(217, 217, 217)',
+                    subunitwidth: 1,
+                    countrywidth: 1,
+                    subunitcolor: 'rgb(255,255,255)',
+                    countrycolor: 'rgb(255,255,255)'
+                },
+            };
+
+            Plotly.newPlot("map2021", dataMap, layoutMap, { showLink: false });
 
 
 
